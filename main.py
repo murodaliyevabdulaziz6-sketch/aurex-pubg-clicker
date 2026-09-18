@@ -32,8 +32,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 async def self_ping_keep_alive():
-    """Bot serverini 24/7 uyg'oq ushlab turish uchun har 5 daqiqada o'ziga so'rov yuboruvchi avto-pinger"""
-    await asyncio.sleep(60)
+    """Bot serverini 24/7 uyg'oq ushlab turish uchun har 2 daqiqada o'ziga so'rov yuboruvchi avto-pinger"""
+    await asyncio.sleep(20)
     logger.info("⚡️ 24/7 Avto-Uyg'otuvchi (Keep-Alive Pinger) xizmati ishga tushdi.")
     while True:
         try:
@@ -41,15 +41,16 @@ async def self_ping_keep_alive():
             if url and url.startswith("https://"):
                 health_url = f"{url.rstrip('/')}/health"
                 async with aiohttp.ClientSession() as session:
-                    async with session.get(health_url, timeout=15) as resp:
+                    async with session.get(health_url, timeout=20) as resp:
                         if resp.status == 200:
-                            logger.info(f"⚡️ [24/7 Auto-Ping]: Server muvaffaqiyatli uyg'otildi ({resp.status})")
+                            logger.info(f"⚡️ [24/7 Auto-Ping]: Server faol va uyg'oq ({resp.status})")
                         else:
-                            logger.warning(f"⚠️ [24/7 Auto-Ping]: Status {resp.status}")
+                            logger.warning(f"⚠️ [24/7 Auto-Ping]: Server status {resp.status}")
         except Exception as e:
             logger.debug(f"Auto-ping xatolik: {e}")
 
-        await asyncio.sleep(300) # Har 5 daqiqada (300 soniya)
+        # Render 15 daqiqada uyquga ketadi, har 2 daqiqada (120 soniya) uyg'otamiz
+        await asyncio.sleep(120)
 
 async def start_web_server(bot: Bot):
     app = create_web_app(bot)

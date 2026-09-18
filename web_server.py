@@ -32,7 +32,9 @@ from database import (
     DEFAULT_PUBG_MIN_WITHDRAW,
     DEFAULT_COIN_TO_SUM_RATE,
     DEFAULT_COIN_TO_UC_RATE,
-    DEFAULT_REFERRAL_BONUS
+    DEFAULT_REFERRAL_BONUS,
+    claim_daily_bonus,
+    get_top_users
 )
 from config import ADMINS, OWNER_ID
 
@@ -183,6 +185,29 @@ async def claim_autobot_api(request):
         "message": msg,
         "user": user
     })
+
+@routes.post("/api/daily_bonus")
+async def daily_bonus_api(request):
+    try:
+        data = await request.json()
+        user_id = int(data.get("user_id"))
+    except Exception:
+        return web.json_response({"error": "Invalid payload"}, status=400)
+
+    coins, remaining, msg = await claim_daily_bonus(user_id)
+    user = await get_user(user_id)
+    return web.json_response({
+        "success": coins > 0,
+        "coins": coins,
+        "remaining": remaining,
+        "message": msg,
+        "user": user
+    })
+
+@routes.get("/api/top")
+async def top_api(request):
+    top_list = await get_top_users(10)
+    return web.json_response({"top": top_list})
 
 @routes.post("/api/withdraw")
 async def withdraw_api(request):

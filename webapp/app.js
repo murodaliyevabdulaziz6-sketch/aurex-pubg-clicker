@@ -967,10 +967,88 @@ async function adminSendBroadcast() {
 let toastTimeout;
 function showToast(message) {
     const toast = document.getElementById("toast");
-    toast.innerText = message;
+    if (!toast) return;
+    toast.innerHTML = message;
     toast.classList.add("show");
     clearTimeout(toastTimeout);
     toastTimeout = setTimeout(() => {
         toast.classList.remove("show");
-    }, 2800);
+    }, 3200);
 }
+
+async function claimDailyBonus() {
+    if (!state.userId) {
+        showToast("Foydalanuvchi ma'lumotlari yuklanmoqda...");
+        return;
+    }
+    try {
+        const res = await fetch("/api/daily_bonus", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: state.userId })
+        });
+        const data = await res.json();
+        if (data.success) {
+            if (tg?.HapticFeedback) {
+                try { tg.HapticFeedback.notificationOccurred("success"); } catch(e) {}
+            }
+            showToast(data.message || "Bonus qabul qilindi!");
+            if (data.user) {
+                state.balance = data.user.balance;
+                state.totalEarned = data.user.total_earned;
+                renderUI();
+            }
+        } else {
+            showToast(data.message || "Keyinroq urinib ko'ring.");
+        }
+    } catch (e) {
+        showToast("Bonus olishda xatolik!");
+    }
+}
+
+async function openLeaderboard() {
+    try {
+        const modal = document.getElementById("leaderboard-modal");
+        const listEl = document.getElementById("leaderboard-list");
+        if (!modal || !listEl) return;
+        listEl.innerHTML = "<div style='text-align:center; padding:20px; color:#aaa;'>Yuklanmoqda...</div>";
+        modal.style.display = "flex";
+
+        const res = await fetch("/api/top");
+        const data = await res.json();
+        if (data.top && data.top.length > 0) {
+            const medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
+            let html = "";
+            data.top.forEach((u, i) => {
+                const medal = medals[i] || `${i+1}.`;
+                const name = u.full_name || u.username || `O'yinchi #${u.user_id}`;
+                const isMe = u.user_id === state.userId;
+                html += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:${isMe ? 'rgba(255, 140, 0, 0.2)' : 'rgba(255,255,255,0.05)'}; border:1px solid ${isMe ? '#ff8c00' : 'rgba(255,255,255,0.1)'}; border-radius:10px; padding:10px 14px; margin-bottom:8px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="font-size:18px;">${medal}</span>
+                            <div>
+                                <div style="font-weight:700; font-size:14px; color:${isMe ? '#ff8c00' : '#fff'};">${name} ${isMe ? '(Siz)' : ''}</div>
+                                <div style="font-size:11px; color:#888;">ID: ${u.user_id}</div>
+                            </div>
+                        </div>
+                        <div style="font-weight:800; color:#00ff88; font-size:14px;">
+                            ${Math.floor(u.total_earned).toLocaleString()} 🪙
+                        </div>
+                    </div>
+                `;
+            });
+            listEl.innerHTML = html;
+        } else {
+            listEl.innerHTML = "<div style='text-align:center; padding:20px; color:#aaa;'>Hozircha reyting bo'sh.</div>";
+        }
+    } catch (e) {
+        showToast("Reytingni yuklab bo'lmadi");
+    }
+}
+
+function closeLeaderboard() {
+    const modal = document.getElementById("leaderboard-modal");
+    if (modal) modal.style.display = "none";
+}
+

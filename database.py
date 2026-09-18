@@ -36,9 +36,15 @@ async def init_db():
             referral_count INTEGER DEFAULT 0,
             is_banned INTEGER DEFAULT 0,
             ban_reason TEXT DEFAULT NULL,
+            last_daily_bonus INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """)
+
+        try:
+            await db.execute("ALTER TABLE users ADD COLUMN last_daily_bonus INTEGER DEFAULT 0")
+        except Exception:
+            pass
 
         await db.execute("""
         CREATE TABLE IF NOT EXISTS settings (
@@ -606,3 +612,46 @@ async def get_detailed_statistics():
             "approved_pubg_count": approved_pubg_count or 0,
             "approved_pubg_uc": approved_pubg_uc or 0,
         }
+
+async def claim_daily_bonus(user_id: int):
+    import random
+    now = int(time.time())
+    user = await get_user(user_id)
+    if not user:
+        return 0, 0, "Foydalanuvchi topilmadi."
+    
+    last_claim = user.get("last_daily_bonus") or 0
+    cooldown = 86400  # 24 soat (86400 soniya)
+    diff = now - last_claim
+    if diff < cooldown:
+        remaining = cooldown - diff
+        hours = remaining // 3600
+        mins = (remaining % 3600) // 60
+        return 0, remaining, f"Keyingi bonusni {hours} soat {mins} daqiqadan so'ng olishingiz mumkin."
+
+    bonus_coins = random.randint(100, 300)
+    new_balance = user["balance"] + bonus_coins
+    new_total = user["total_earned"] + bonus_coins
+
+    async with aiosqlite.connect(DB_NAME) as db:
+        await db.execute("""
+            UPDATE users SET balance = ?, total_earned = ?, last_daily_bonus = ?
+            WHERE user_id = ?
+        """, (new_balance, new_total, now, user_id))
+        await db.commit()
+    
+    return bonus_coins, 0, f"🎉 Tabriklaymiz! Sizga bugungi kunlik bonus sifatida <b>+{bonus_coins} 🪙</b> berildi!"
+
+async def get_top_users(limit: int = 10):
+    async with aiosqlite.connect(DB_NAME) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute("""
+            SELECT user_id, username, full_name, balance, total_earned
+            FROM users
+            WHERE is_banned = 0
+            ORDER BY total_earned DESC, balance DESC
+            LIMIT ?
+        """, (limit,)) as cursor:
+            rows = await cursor.fetchall()
+            return [dict(r) for r in rows]
+

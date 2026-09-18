@@ -28,6 +28,7 @@ def build_webapp_url(user_id: int = None, username: str = "", full_name: str = "
 def main_menu_keyboard(is_admin: bool = False, user_id: int = None, username: str = "", full_name: str = "") -> ReplyKeyboardMarkup:
     keyboard = [
         [KeyboardButton(text="⚡️ Do'kon (Kuchaytirish)"), KeyboardButton(text="💳 Pul Yechish (UC / Karta)")],
+        [KeyboardButton(text="🎁 Kunlik Bonus"), KeyboardButton(text="🏆 Top Reyting")],
         [KeyboardButton(text="👥 Do'stlar (Referal)"), KeyboardButton(text="👤 Profil & Balans")],
         [KeyboardButton(text="📊 Bot Statistikasi"), KeyboardButton(text="ℹ️ Qo'llanma")]
     ]
