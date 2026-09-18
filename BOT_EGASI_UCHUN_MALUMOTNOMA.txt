@@ -46,7 +46,7 @@ pastki menyuda 👑 Admin Panel tugmasi chiqadi.
 --------------------------------------------------------------------------------
 • Hosting Xizmati:       Render.com (https://dashboard.render.com)
 • Servis Nomi:           aurex-clicker-bot
-• GitHub Repozitoriya:   https://github.com/kin37271-cmyk/aurex-pubg-clicker
+• GitHub Repozitoriya:   https://github.com/murodaliyevabdulaziz6-sketch/aurex-pubg-clicker
 • 24/7 Tizimi:           Bot serverida Keep-Alive (avto-uyg'otuvchi) mavjud, 
                          shuning uchun u uzluksiz 24/7 onlayn ishlaydi.
 
