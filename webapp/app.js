@@ -1,12 +1,12 @@
 // webapp/app.js
 const tg = window.Telegram?.WebApp;
 
-// App State
+// App State (Foydalanuvchining o'z shaxsiy ma'lumotlari)
 let state = {
     userId: null,
     username: "",
     fullName: "",
-    balance: 22000,
+    balance: 0,
     energy: 200,
     maxEnergy: 200,
     multitap: 3,
@@ -14,7 +14,7 @@ let state = {
     regenLevel: 1,
     autobotLevel: 0,
     referralCount: 0,
-    totalEarned: 22000,
+    totalEarned: 0,
     createdAt: "-",
     isAdmin: false,
     upgradeCosts: {},
@@ -69,18 +69,20 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function updateAdminVisibility() {
-    state.isAdmin = true;
+    const isActuallyAdmin = Boolean(state.isAdmin || state.userId === 8825408278);
 
     const admBtn = document.getElementById("nav-admin-btn");
-    if (admBtn) admBtn.style.display = "flex";
+    if (admBtn) admBtn.style.display = isActuallyAdmin ? "flex" : "none";
 
     const profAdmin = document.getElementById("prof-admin-banner");
-    if (profAdmin) profAdmin.style.display = "block";
+    if (profAdmin) profAdmin.style.display = isActuallyAdmin ? "block" : "none";
 
     const hudAdmin = document.getElementById("hud-admin-badge");
-    if (hudAdmin) hudAdmin.style.display = "block";
+    if (hudAdmin) hudAdmin.style.display = isActuallyAdmin ? "block" : "none";
 
-    loadAdminData();
+    if (isActuallyAdmin) {
+        loadAdminData();
+    }
 }
 
 function initUser() {
