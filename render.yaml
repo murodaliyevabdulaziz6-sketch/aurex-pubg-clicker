@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: aurex-clicker-bot
+    name: aurex-pubg-clicker-bot
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: python main.py
@@ -12,7 +12,7 @@ services:
       - key: OWNER_ID
         value: "8825408278"
       - key: WEBAPP_URL
-        value: https://aurex-clicker-bot.onrender.com
+        value: https://aurex-pubg-clicker-bot.onrender.com
       - key: PORT
         value: 8080
 

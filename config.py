@@ -14,7 +14,7 @@ DB_NAME = "clicker_bot.db"
 # Web App sozlamalari
 WEB_HOST = "0.0.0.0"
 WEB_PORT = int(os.getenv("PORT", 8080))
-WEBAPP_URL = os.getenv("WEBAPP_URL", "https://aurex-clicker-bot.onrender.com")
+WEBAPP_URL = os.getenv("WEBAPP_URL", "https://aurex-pubg-clicker-bot.onrender.com")
 
 # Standart sozlamalar (Oddiy mijozlar uchun)
 DEFAULT_MAX_ENERGY = 200             # Boshlang'ich 200 limit

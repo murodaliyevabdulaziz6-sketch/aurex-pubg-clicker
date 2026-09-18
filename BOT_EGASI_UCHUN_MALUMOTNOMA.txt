@@ -12,7 +12,7 @@ admin paneli va barcha muhim sozlamalari haqida to'liq ma'lumotlar jamlangan.
 • Bot Username:          @Aurex_Tekin_uc_bot
 • Bot Havolasi:          https://t.me/Aurex_Tekin_uc_bot
 • Bot Tokeni:            8987574004:AAEcFYWsaj1Yt2-VRnts3IW0kK_ClMMZG4E
-• Web App Havolasi:      https://aurex-clicker-bot.onrender.com
+• Web App Havolasi:      https://aurex-pubg-clicker-bot.onrender.com
 
 --------------------------------------------------------------------------------
 2. 👑 EGA (RUXSATLAR)
