@@ -649,7 +649,7 @@ async def get_top_users(limit: int = 10):
             SELECT user_id, username, full_name, balance, total_earned
             FROM users
             WHERE is_banned = 0
-            ORDER BY total_earned DESC, balance DESC
+            ORDER BY balance DESC, total_earned DESC
             LIMIT ?
         """, (limit,)) as cursor:
             rows = await cursor.fetchall()

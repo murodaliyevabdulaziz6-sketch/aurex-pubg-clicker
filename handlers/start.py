@@ -169,7 +169,7 @@ async def show_top_users(message: Message):
     for i, u in enumerate(top_list):
         medal = medals[i] if i < len(medals) else f"{i+1}."
         name = u['full_name'] or u['username'] or f"Foydalanuvchi {u['user_id']}"
-        text += f"{medal} <b>{name}</b> — <b>{u['total_earned']:,.0f} 🪙</b>\n"
+        text += f"{medal} <b>{name}</b> — <b>{u['balance']:,.0f} 🪙</b>\n"
     
     text += "\n🔥 Siz ham clickerda faol bo'ling va eng yuqori o'rinni egallang!"
     await message.answer(text, parse_mode="HTML")

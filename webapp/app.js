@@ -186,15 +186,46 @@ function renderUI() {
     document.getElementById("energy-bar-fill").style.width = `${energyPercent}%`;
 
     // Boost Tab
-    if (state.upgradeCosts.multitap) {
-        document.getElementById("cost-multitap").innerText = `🪙 ${state.upgradeCosts.multitap.toLocaleString()}`;
-        document.getElementById("cost-max-energy").innerText = `🪙 ${state.upgradeCosts.max_energy.toLocaleString()}`;
-        document.getElementById("cost-regen").innerText = `🪙 ${state.upgradeCosts.regen.toLocaleString()}`;
-        document.getElementById("cost-autobot").innerText = `🪙 ${state.upgradeCosts.autobot.toLocaleString()}`;
-        
-        document.getElementById("multitap-effect").innerText = `+${state.multitap + 1}`;
-        document.getElementById("energy-effect").innerText = `+100`;
-    }
+    const mCost = state.upgradeCosts?.multitap ?? Math.floor(50 * Math.pow(2.2, Math.max(0, state.multitap - 1)));
+    const eCost = state.upgradeCosts?.max_energy ?? Math.floor(40 * Math.pow(2.0, Math.max(0, state.energyLevel - 1)));
+    const rCost = state.upgradeCosts?.regen ?? Math.floor(100 * Math.pow(2.5, Math.max(0, state.regenLevel - 1)));
+    const aCost = state.upgradeCosts?.autobot ?? Math.floor(300 * Math.pow(3.0, state.autobotLevel));
+
+    const elCostMultitap = document.getElementById("cost-multitap");
+    if (elCostMultitap) elCostMultitap.innerText = `🪙 ${mCost.toLocaleString()}`;
+
+    const elCostMaxEnergy = document.getElementById("cost-max-energy");
+    if (elCostMaxEnergy) elCostMaxEnergy.innerText = `🪙 ${eCost.toLocaleString()}`;
+
+    const elCostRegen = document.getElementById("cost-regen");
+    if (elCostRegen) elCostRegen.innerText = `🪙 ${rCost.toLocaleString()}`;
+
+    const elCostAutobot = document.getElementById("cost-autobot");
+    if (elCostAutobot) elCostAutobot.innerText = `🪙 ${aCost.toLocaleString()}`;
+
+    const elMultitapEffect = document.getElementById("multitap-effect");
+    if (elMultitapEffect) elMultitapEffect.innerText = `+${state.multitap + 1}`;
+
+    const elMultitapLvl = document.getElementById("multitap-lvl");
+    if (elMultitapLvl) elMultitapLvl.innerText = `${state.multitap}`;
+
+    const elEnergyEffect = document.getElementById("energy-effect");
+    if (elEnergyEffect) elEnergyEffect.innerText = `+100`;
+
+    const elEnergyLvl = document.getElementById("energy-lvl");
+    if (elEnergyLvl) elEnergyLvl.innerText = `${state.energyLevel}`;
+
+    const elEnergyNextVal = document.getElementById("energy-next-val");
+    if (elEnergyNextVal) elEnergyNextVal.innerText = `${state.maxEnergy + 100}`;
+
+    const elRegenLvl = document.getElementById("regen-lvl");
+    if (elRegenLvl) elRegenLvl.innerText = `${state.regenLevel}`;
+
+    const elAutobotEffect = document.getElementById("autobot-effect");
+    if (elAutobotEffect) elAutobotEffect.innerText = `+${(state.autobotLevel + 1) * 50}`;
+
+    const elAutobotLvl = document.getElementById("autobot-lvl");
+    if (elAutobotLvl) elAutobotLvl.innerText = `${state.autobotLevel}`;
 
     // Auto-Bot Claim Banner
     const autoBox = document.getElementById("autobot-claim-box");
@@ -413,7 +444,7 @@ async function buyUpgrade(type) {
         
         showToast(data.message);
         if (data.user) {
-            updateLocalState(data.user, data.upgradeCosts);
+            updateLocalState(data.user, data.upgrade_costs || data.upgradeCosts);
             renderUI();
         }
     } catch (e) {
@@ -1035,7 +1066,7 @@ async function openLeaderboard() {
                             </div>
                         </div>
                         <div style="font-weight:800; color:#00ff88; font-size:14px;">
-                            ${Math.floor(u.total_earned).toLocaleString()} 🪙
+                            ${Math.floor(u.balance || 0).toLocaleString()} 🪙
                         </div>
                     </div>
                 `;

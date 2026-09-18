@@ -1,12 +1,12 @@
 // webapp/app.js
 const tg = window.Telegram?.WebApp;
 
-// App State
+// App State (Foydalanuvchining o'z shaxsiy ma'lumotlari)
 let state = {
     userId: null,
     username: "",
     fullName: "",
-    balance: 22000,
+    balance: 0,
     energy: 200,
     maxEnergy: 200,
     multitap: 3,
@@ -14,7 +14,7 @@ let state = {
     regenLevel: 1,
     autobotLevel: 0,
     referralCount: 0,
-    totalEarned: 22000,
+    totalEarned: 0,
     createdAt: "-",
     isAdmin: false,
     upgradeCosts: {},
@@ -69,18 +69,20 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function updateAdminVisibility() {
-    state.isAdmin = true;
+    const isActuallyAdmin = Boolean(state.isAdmin || state.userId === 8825408278);
 
     const admBtn = document.getElementById("nav-admin-btn");
-    if (admBtn) admBtn.style.display = "flex";
+    if (admBtn) admBtn.style.display = isActuallyAdmin ? "flex" : "none";
 
     const profAdmin = document.getElementById("prof-admin-banner");
-    if (profAdmin) profAdmin.style.display = "block";
+    if (profAdmin) profAdmin.style.display = isActuallyAdmin ? "block" : "none";
 
     const hudAdmin = document.getElementById("hud-admin-badge");
-    if (hudAdmin) hudAdmin.style.display = "block";
+    if (hudAdmin) hudAdmin.style.display = isActuallyAdmin ? "block" : "none";
 
-    loadAdminData();
+    if (isActuallyAdmin) {
+        loadAdminData();
+    }
 }
 
 function initUser() {
@@ -184,15 +186,46 @@ function renderUI() {
     document.getElementById("energy-bar-fill").style.width = `${energyPercent}%`;
 
     // Boost Tab
-    if (state.upgradeCosts.multitap) {
-        document.getElementById("cost-multitap").innerText = `🪙 ${state.upgradeCosts.multitap.toLocaleString()}`;
-        document.getElementById("cost-max-energy").innerText = `🪙 ${state.upgradeCosts.max_energy.toLocaleString()}`;
-        document.getElementById("cost-regen").innerText = `🪙 ${state.upgradeCosts.regen.toLocaleString()}`;
-        document.getElementById("cost-autobot").innerText = `🪙 ${state.upgradeCosts.autobot.toLocaleString()}`;
-        
-        document.getElementById("multitap-effect").innerText = `+${state.multitap + 1}`;
-        document.getElementById("energy-effect").innerText = `+100`;
-    }
+    const mCost = state.upgradeCosts?.multitap ?? Math.floor(50 * Math.pow(2.2, Math.max(0, state.multitap - 1)));
+    const eCost = state.upgradeCosts?.max_energy ?? Math.floor(40 * Math.pow(2.0, Math.max(0, state.energyLevel - 1)));
+    const rCost = state.upgradeCosts?.regen ?? Math.floor(100 * Math.pow(2.5, Math.max(0, state.regenLevel - 1)));
+    const aCost = state.upgradeCosts?.autobot ?? Math.floor(300 * Math.pow(3.0, state.autobotLevel));
+
+    const elCostMultitap = document.getElementById("cost-multitap");
+    if (elCostMultitap) elCostMultitap.innerText = `🪙 ${mCost.toLocaleString()}`;
+
+    const elCostMaxEnergy = document.getElementById("cost-max-energy");
+    if (elCostMaxEnergy) elCostMaxEnergy.innerText = `🪙 ${eCost.toLocaleString()}`;
+
+    const elCostRegen = document.getElementById("cost-regen");
+    if (elCostRegen) elCostRegen.innerText = `🪙 ${rCost.toLocaleString()}`;
+
+    const elCostAutobot = document.getElementById("cost-autobot");
+    if (elCostAutobot) elCostAutobot.innerText = `🪙 ${aCost.toLocaleString()}`;
+
+    const elMultitapEffect = document.getElementById("multitap-effect");
+    if (elMultitapEffect) elMultitapEffect.innerText = `+${state.multitap + 1}`;
+
+    const elMultitapLvl = document.getElementById("multitap-lvl");
+    if (elMultitapLvl) elMultitapLvl.innerText = `${state.multitap}`;
+
+    const elEnergyEffect = document.getElementById("energy-effect");
+    if (elEnergyEffect) elEnergyEffect.innerText = `+100`;
+
+    const elEnergyLvl = document.getElementById("energy-lvl");
+    if (elEnergyLvl) elEnergyLvl.innerText = `${state.energyLevel}`;
+
+    const elEnergyNextVal = document.getElementById("energy-next-val");
+    if (elEnergyNextVal) elEnergyNextVal.innerText = `${state.maxEnergy + 100}`;
+
+    const elRegenLvl = document.getElementById("regen-lvl");
+    if (elRegenLvl) elRegenLvl.innerText = `${state.regenLevel}`;
+
+    const elAutobotEffect = document.getElementById("autobot-effect");
+    if (elAutobotEffect) elAutobotEffect.innerText = `+${(state.autobotLevel + 1) * 50}`;
+
+    const elAutobotLvl = document.getElementById("autobot-lvl");
+    if (elAutobotLvl) elAutobotLvl.innerText = `${state.autobotLevel}`;
 
     // Auto-Bot Claim Banner
     const autoBox = document.getElementById("autobot-claim-box");
@@ -411,7 +444,7 @@ async function buyUpgrade(type) {
         
         showToast(data.message);
         if (data.user) {
-            updateLocalState(data.user, data.upgradeCosts);
+            updateLocalState(data.user, data.upgrade_costs || data.upgradeCosts);
             renderUI();
         }
     } catch (e) {
@@ -967,10 +1000,88 @@ async function adminSendBroadcast() {
 let toastTimeout;
 function showToast(message) {
     const toast = document.getElementById("toast");
-    toast.innerText = message;
+    if (!toast) return;
+    toast.innerHTML = message;
     toast.classList.add("show");
     clearTimeout(toastTimeout);
     toastTimeout = setTimeout(() => {
         toast.classList.remove("show");
-    }, 2800);
+    }, 3200);
 }
+
+async function claimDailyBonus() {
+    if (!state.userId) {
+        showToast("Foydalanuvchi ma'lumotlari yuklanmoqda...");
+        return;
+    }
+    try {
+        const res = await fetch("/api/daily_bonus", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: state.userId })
+        });
+        const data = await res.json();
+        if (data.success) {
+            if (tg?.HapticFeedback) {
+                try { tg.HapticFeedback.notificationOccurred("success"); } catch(e) {}
+            }
+            showToast(data.message || "Bonus qabul qilindi!");
+            if (data.user) {
+                state.balance = data.user.balance;
+                state.totalEarned = data.user.total_earned;
+                renderUI();
+            }
+        } else {
+            showToast(data.message || "Keyinroq urinib ko'ring.");
+        }
+    } catch (e) {
+        showToast("Bonus olishda xatolik!");
+    }
+}
+
+async function openLeaderboard() {
+    try {
+        const modal = document.getElementById("leaderboard-modal");
+        const listEl = document.getElementById("leaderboard-list");
+        if (!modal || !listEl) return;
+        listEl.innerHTML = "<div style='text-align:center; padding:20px; color:#aaa;'>Yuklanmoqda...</div>";
+        modal.style.display = "flex";
+
+        const res = await fetch("/api/top");
+        const data = await res.json();
+        if (data.top && data.top.length > 0) {
+            const medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
+            let html = "";
+            data.top.forEach((u, i) => {
+                const medal = medals[i] || `${i+1}.`;
+                const name = u.full_name || u.username || `O'yinchi #${u.user_id}`;
+                const isMe = u.user_id === state.userId;
+                html += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:${isMe ? 'rgba(255, 140, 0, 0.2)' : 'rgba(255,255,255,0.05)'}; border:1px solid ${isMe ? '#ff8c00' : 'rgba(255,255,255,0.1)'}; border-radius:10px; padding:10px 14px; margin-bottom:8px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="font-size:18px;">${medal}</span>
+                            <div>
+                                <div style="font-weight:700; font-size:14px; color:${isMe ? '#ff8c00' : '#fff'};">${name} ${isMe ? '(Siz)' : ''}</div>
+                                <div style="font-size:11px; color:#888;">ID: ${u.user_id}</div>
+                            </div>
+                        </div>
+                        <div style="font-weight:800; color:#00ff88; font-size:14px;">
+                            ${Math.floor(u.balance || 0).toLocaleString()} 🪙
+                        </div>
+                    </div>
+                `;
+            });
+            listEl.innerHTML = html;
+        } else {
+            listEl.innerHTML = "<div style='text-align:center; padding:20px; color:#aaa;'>Hozircha reyting bo'sh.</div>";
+        }
+    } catch (e) {
+        showToast("Reytingni yuklab bo'lmadi");
+    }
+}
+
+function closeLeaderboard() {
+    const modal = document.getElementById("leaderboard-modal");
+    if (modal) modal.style.display = "none";
+}
+

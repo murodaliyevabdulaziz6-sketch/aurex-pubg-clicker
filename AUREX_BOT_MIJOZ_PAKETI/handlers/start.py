@@ -2,7 +2,7 @@
 from aiogram import Router, F, Bot
 from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.filters import CommandStart, CommandObject
-from database import get_or_create_user, get_user, get_statistics, get_setting, is_admin_user
+from database import get_or_create_user, get_user, get_statistics, get_setting, is_admin_user, claim_daily_bonus, get_top_users
 from keyboards.user_kb import main_menu_keyboard, subscription_keyboard, webapp_inline_keyboard
 from middlewares.subscription import get_unsubscribed_channels
 from config import ADMINS, DEFAULT_REFERRAL_BONUS, WEBAPP_URL, DEFAULT_COIN_TO_SUM_RATE
@@ -147,3 +147,30 @@ async def show_guide(message: Message):
         f"Savollar bo'lsa adminga murojaat qiling."
     )
     await message.answer(text, parse_mode="HTML")
+
+@router.message(F.text.in_({"🎁 Kunlik Bonus", "/bonus"}))
+async def show_daily_bonus(message: Message):
+    user_id = message.from_user.id
+    coins, remaining, msg = await claim_daily_bonus(user_id)
+    if coins > 0:
+        await message.answer(f"🎁 <b>KUNLIK BONUS:</b>\n\n{msg}\n\nErtaga yana yangi bonus olish uchun qaytib keling! 🔥", parse_mode="HTML")
+    else:
+        await message.answer(f"⏳ <b>KUNLIK BONUS:</b>\n\n{msg}", parse_mode="HTML")
+
+@router.message(F.text.in_({"🏆 Top Reyting", "/top"}))
+async def show_top_users(message: Message):
+    top_list = await get_top_users(10)
+    if not top_list:
+        await message.answer("🏆 Reyting ro'yxati hozircha bo'sh.", parse_mode="HTML")
+        return
+    
+    medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
+    text = "🏆 <b>TOP 10 ENG KO'P TANGA TO'PLAGANLAR:</b>\n\n"
+    for i, u in enumerate(top_list):
+        medal = medals[i] if i < len(medals) else f"{i+1}."
+        name = u['full_name'] or u['username'] or f"Foydalanuvchi {u['user_id']}"
+        text += f"{medal} <b>{name}</b> — <b>{u['balance']:,.0f} 🪙</b>\n"
+    
+    text += "\n🔥 Siz ham clickerda faol bo'ling va eng yuqori o'rinni egallang!"
+    await message.answer(text, parse_mode="HTML")
+

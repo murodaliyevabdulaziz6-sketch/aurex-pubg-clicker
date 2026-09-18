@@ -597,6 +597,19 @@ body {
     font-family: 'Orbitron', sans-serif;
 }
 
+.lvl-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 8px;
+    background: rgba(255, 140, 0, 0.2);
+    border: 1px solid rgba(255, 140, 0, 0.4);
+    color: #ffaa00;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
 .cyber-btn {
     background: linear-gradient(135deg, #ff4000, #ff8c00);
     color: #fff;

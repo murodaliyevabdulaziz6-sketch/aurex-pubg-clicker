@@ -80,15 +80,18 @@ async def get_user_api(request):
     user = await get_or_create_user(uid, username, full_name, ref_id)
     settings = await get_all_settings()
 
+    user_costs = {
+        "multitap": UPGRADE_COSTS["multitap"](user["multitap_level"]),
+        "max_energy": UPGRADE_COSTS["max_energy"](user["energy_level"]),
+        "regen": UPGRADE_COSTS["regen"](user["regen_level"]),
+        "autobot": UPGRADE_COSTS["autobot"](user["autobot_level"])
+    }
+
     return web.json_response({
         "user": user,
         "is_admin": await check_is_admin(uid),
-        "upgrade_costs": {
-            "multitap": UPGRADE_COSTS["multitap"](user["multitap_level"]),
-            "max_energy": UPGRADE_COSTS["max_energy"](user["energy_level"]),
-            "regen": UPGRADE_COSTS["regen"](user["regen_level"]),
-            "autobot": UPGRADE_COSTS["autobot"](user["autobot_level"])
-        },
+        "upgrade_costs": user_costs,
+        "upgradeCosts": user_costs,
         "rates": {
             "coin_to_sum": float(settings.get("coin_to_sum_rate", DEFAULT_COIN_TO_SUM_RATE)),
             "coin_to_uc": float(settings.get("coin_to_uc_rate", DEFAULT_COIN_TO_UC_RATE)),
@@ -157,16 +160,18 @@ async def upgrade_api(request):
 
     success, msg = await buy_upgrade(user_id, upgrade_type)
     user = await get_user(user_id)
+    costs = {
+        "multitap": UPGRADE_COSTS["multitap"](user["multitap_level"]),
+        "max_energy": UPGRADE_COSTS["max_energy"](user["energy_level"]),
+        "regen": UPGRADE_COSTS["regen"](user["regen_level"]),
+        "autobot": UPGRADE_COSTS["autobot"](user["autobot_level"])
+    }
     return web.json_response({
         "success": success,
         "message": msg,
         "user": user,
-        "upgrade_costs": {
-            "multitap": UPGRADE_COSTS["multitap"](user["multitap_level"]),
-            "max_energy": UPGRADE_COSTS["max_energy"](user["energy_level"]),
-            "regen": UPGRADE_COSTS["regen"](user["regen_level"]),
-            "autobot": UPGRADE_COSTS["autobot"](user["autobot_level"])
-        }
+        "upgrade_costs": costs,
+        "upgradeCosts": costs
     })
 
 @routes.post("/api/claim_autobot")

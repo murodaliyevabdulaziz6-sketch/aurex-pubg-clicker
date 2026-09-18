@@ -32,7 +32,9 @@ from database import (
     DEFAULT_PUBG_MIN_WITHDRAW,
     DEFAULT_COIN_TO_SUM_RATE,
     DEFAULT_COIN_TO_UC_RATE,
-    DEFAULT_REFERRAL_BONUS
+    DEFAULT_REFERRAL_BONUS,
+    claim_daily_bonus,
+    get_top_users
 )
 from config import ADMINS, OWNER_ID
 
@@ -78,15 +80,18 @@ async def get_user_api(request):
     user = await get_or_create_user(uid, username, full_name, ref_id)
     settings = await get_all_settings()
 
+    user_costs = {
+        "multitap": UPGRADE_COSTS["multitap"](user["multitap_level"]),
+        "max_energy": UPGRADE_COSTS["max_energy"](user["energy_level"]),
+        "regen": UPGRADE_COSTS["regen"](user["regen_level"]),
+        "autobot": UPGRADE_COSTS["autobot"](user["autobot_level"])
+    }
+
     return web.json_response({
         "user": user,
         "is_admin": await check_is_admin(uid),
-        "upgrade_costs": {
-            "multitap": UPGRADE_COSTS["multitap"](user["multitap_level"]),
-            "max_energy": UPGRADE_COSTS["max_energy"](user["energy_level"]),
-            "regen": UPGRADE_COSTS["regen"](user["regen_level"]),
-            "autobot": UPGRADE_COSTS["autobot"](user["autobot_level"])
-        },
+        "upgrade_costs": user_costs,
+        "upgradeCosts": user_costs,
         "rates": {
             "coin_to_sum": float(settings.get("coin_to_sum_rate", DEFAULT_COIN_TO_SUM_RATE)),
             "coin_to_uc": float(settings.get("coin_to_uc_rate", DEFAULT_COIN_TO_UC_RATE)),
@@ -155,16 +160,18 @@ async def upgrade_api(request):
 
     success, msg = await buy_upgrade(user_id, upgrade_type)
     user = await get_user(user_id)
+    costs = {
+        "multitap": UPGRADE_COSTS["multitap"](user["multitap_level"]),
+        "max_energy": UPGRADE_COSTS["max_energy"](user["energy_level"]),
+        "regen": UPGRADE_COSTS["regen"](user["regen_level"]),
+        "autobot": UPGRADE_COSTS["autobot"](user["autobot_level"])
+    }
     return web.json_response({
         "success": success,
         "message": msg,
         "user": user,
-        "upgrade_costs": {
-            "multitap": UPGRADE_COSTS["multitap"](user["multitap_level"]),
-            "max_energy": UPGRADE_COSTS["max_energy"](user["energy_level"]),
-            "regen": UPGRADE_COSTS["regen"](user["regen_level"]),
-            "autobot": UPGRADE_COSTS["autobot"](user["autobot_level"])
-        }
+        "upgrade_costs": costs,
+        "upgradeCosts": costs
     })
 
 @routes.post("/api/claim_autobot")
@@ -183,6 +190,29 @@ async def claim_autobot_api(request):
         "message": msg,
         "user": user
     })
+
+@routes.post("/api/daily_bonus")
+async def daily_bonus_api(request):
+    try:
+        data = await request.json()
+        user_id = int(data.get("user_id"))
+    except Exception:
+        return web.json_response({"error": "Invalid payload"}, status=400)
+
+    coins, remaining, msg = await claim_daily_bonus(user_id)
+    user = await get_user(user_id)
+    return web.json_response({
+        "success": coins > 0,
+        "coins": coins,
+        "remaining": remaining,
+        "message": msg,
+        "user": user
+    })
+
+@routes.get("/api/top")
+async def top_api(request):
+    top_list = await get_top_users(10)
+    return web.json_response({"top": top_list})
 
 @routes.post("/api/withdraw")
 async def withdraw_api(request):

@@ -2,21 +2,34 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.exceptions import TelegramBadRequest
-from database import get_user, buy_upgrade, claim_autobot
+from database import get_user, buy_upgrade, claim_autobot, UPGRADE_COSTS
 from keyboards.user_kb import shop_inline_keyboard, clicker_inline_keyboard
 from handlers.clicker import render_clicker_text
 
 router = Router()
 
 def render_shop_text(user: dict) -> str:
+    m_lvl = user["multitap_level"]
+    m_cost = UPGRADE_COSTS["multitap"](m_lvl)
+    e_lvl = user["energy_level"]
+    e_cost = UPGRADE_COSTS["max_energy"](e_lvl)
+    r_lvl = user["regen_level"]
+    r_cost = UPGRADE_COSTS["regen"](r_lvl)
+    a_lvl = user["autobot_level"]
+    a_cost = UPGRADE_COSTS["autobot"](a_lvl)
+
     return (
         f"⚡️ <b>Do'kon / Kuchaytirish Bo'limi</b> ⚡️\n\n"
-        f"💰 Balansingiz: <b>{user['balance']:.1f} 🪙</b>\n\n"
-        f"👆 <b>Multitap:</b> 1 bosishda olinadigan tangalarni oshirish.\n"
-        f"🔋 <b>Max Limit:</b> Maksimal energiya sig'imini 100 taga oshirish.\n"
-        f"⏳ <b>Tezkor Quvvat:</b> Energiyaning to'lish tezligini oshirish.\n"
-        f"🤖 <b>Auto-Bot:</b> Botda bo'lmasangiz ham passiv daromad yig'ib berish (soatiga 50 tanga/daraja).\n\n"
-        f"<i>Kuchaytirishni xarid qilish uchun pastdagi tugmani bosing:</i>"
+        f"💰 Balansingiz: <b>{user['balance']:,.1f} 🪙</b>\n\n"
+        f"👆 <b>Multitap ({m_lvl}-daraja):</b> Narxi: <b>{m_cost:,} 🪙</b>\n"
+        f"   ↳ <i>1 bosishda {m_lvl + 1} tanga olish (+1/tap)</i>\n\n"
+        f"🔋 <b>Maksimal Quvvat ({e_lvl}-daraja):</b> Narxi: <b>{e_cost:,} 🪙</b>\n"
+        f"   ↳ <i>Sig'imni {user['max_energy'] + 100} gacha (+100) oshirish</i>\n\n"
+        f"⏳ <b>Tezkor Tiklanish ({r_lvl}-daraja):</b> Narxi: <b>{r_cost:,} 🪙</b>\n"
+        f"   ↳ <i>Energiyaning to'lish tezligini tezlashtirish</i>\n\n"
+        f"🤖 <b>Auto-Bot Passiv ({a_lvl}-daraja):</b> Narxi: <b>{a_cost:,} 🪙</b>\n"
+        f"   ↳ <i>Passiv daromad (soatiga {(a_lvl + 1) * 50} 🪙)</i>\n\n"
+        f"<i>Kuchaytirishni xarid qilish uchun pastdagi tugmalardan birini bosing:</i>"
     )
 
 @router.message(F.text == "⚡️ Do'kon (Kuchaytirish)")
