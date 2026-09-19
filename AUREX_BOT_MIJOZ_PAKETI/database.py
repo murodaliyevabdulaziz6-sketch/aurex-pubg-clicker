@@ -125,11 +125,6 @@ async def init_db():
         VALUES (8825408278, 'Aurex_Ega', 'Aurex Egasi', 'owner', 1, 1, 1, 1, 1, 1)
         """)
 
-        # Ismoil dasturchi: 30,000 tanga, max_energy va energiyasi 1100 qilib sozlash
-        await db.execute("""
-        UPDATE users SET balance = 30000, total_earned = 30000, max_energy = 1100, energy = 1100, energy_level = 10 WHERE user_id = 8422157752
-        """)
-
         await db.commit()
 
 async def get_setting(key: str, default=None):
@@ -162,14 +157,6 @@ async def get_or_create_user(user_id: int, username: str = None, full_name: str 
             row = await cursor.fetchone()
             if row:
                 user = dict(row)
-                if user.get("user_id") == 8422157752 and (user.get("max_energy", 0) < 1100 or user.get("balance", 0) < 30000):
-                    user["max_energy"] = 1100
-                    user["energy"] = 1100
-                    user["energy_level"] = 10
-                    user["balance"] = 30000
-                    user["total_earned"] = 30000
-                    await db.execute("UPDATE users SET balance = 30000, total_earned = 30000, max_energy = 1100, energy = 1100, energy_level = 10 WHERE user_id = ?", (user_id,))
-                    await db.commit()
                 # Username yoki full_name yangilash
                 if username != user.get("username") or full_name != user.get("full_name"):
                     await db.execute("UPDATE users SET username = ?, full_name = ? WHERE user_id = ?", (username, full_name, user_id))
