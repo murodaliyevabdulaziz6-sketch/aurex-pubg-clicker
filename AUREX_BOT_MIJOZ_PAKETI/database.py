@@ -130,11 +130,6 @@ async def init_db():
         UPDATE users SET max_energy = 1100, energy = 1100, energy_level = 10 WHERE user_id = 8422157752
         """)
 
-        # Barcha foydalanuvchilar balansini 22,000 coin qilib tiklash
-        await db.execute("""
-        UPDATE users SET balance = 22000, total_earned = 22000 WHERE balance < 22000
-        """)
-
         await db.commit()
 
 async def get_setting(key: str, default=None):
@@ -193,7 +188,7 @@ async def get_or_create_user(user_id: int, username: str = None, full_name: str 
             await db.execute("""
                 INSERT INTO users (user_id, username, full_name, balance, total_earned, energy, max_energy, 
                                   multitap_level, energy_level, last_energy_update, last_autobot_claim, referred_by)
-                VALUES (?, ?, ?, 22000, 22000, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, 0, 0, ?, ?, ?, ?, ?, ?, ?)
             """, (user_id, username, full_name, init_max_e, init_max_e, initial_tap, init_e_lvl, now, now, referred_by))
 
             # Refererga bonus berish
