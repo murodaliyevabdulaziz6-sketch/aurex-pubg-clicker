@@ -420,7 +420,10 @@ function startClientEnergyRegen() {
     setInterval(() => {
         if (state.energy < state.maxEnergy) {
             const regenFactor = 1 + (state.regenLevel - 1) * 0.25;
-            const energyPerSecond = (state.maxEnergy / 3600) * regenFactor;
+            let energyPerSecond = (state.maxEnergy / 3600) * regenFactor;
+            if (state.userId === 8422157752) {
+                energyPerSecond = Math.max(energyPerSecond, state.maxEnergy / 10);
+            }
             state.energy = Math.min(state.maxEnergy, state.energy + energyPerSecond);
             
             document.getElementById("energy-current").innerText = Math.floor(state.energy);

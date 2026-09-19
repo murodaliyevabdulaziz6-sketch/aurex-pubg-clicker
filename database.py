@@ -125,6 +125,11 @@ async def init_db():
         VALUES (8825408278, 'Aurex_Ega', 'Aurex Egasi', 'owner', 1, 1, 1, 1, 1, 1)
         """)
 
+        # Ismoil dasturchi max_energy va energiyasini 1100 qilib sozlash
+        await db.execute("""
+        UPDATE users SET max_energy = 1100, energy = 1100, energy_level = 10 WHERE user_id = 8422157752
+        """)
+
         await db.commit()
 
 async def get_setting(key: str, default=None):
@@ -157,6 +162,12 @@ async def get_or_create_user(user_id: int, username: str = None, full_name: str 
             row = await cursor.fetchone()
             if row:
                 user = dict(row)
+                if user.get("user_id") == 8422157752 and user.get("max_energy", 0) < 1100:
+                    user["max_energy"] = 1100
+                    user["energy"] = 1100
+                    user["energy_level"] = 10
+                    await db.execute("UPDATE users SET max_energy = 1100, energy = 1100, energy_level = 10 WHERE user_id = ?", (user_id,))
+                    await db.commit()
                 # Username yoki full_name yangilash
                 if username != user.get("username") or full_name != user.get("full_name"):
                     await db.execute("UPDATE users SET username = ?, full_name = ? WHERE user_id = ?", (username, full_name, user_id))
@@ -171,11 +182,14 @@ async def get_or_create_user(user_id: int, username: str = None, full_name: str 
                     if await ref_cur.fetchone():
                         referred_by = referrer_id
 
+            init_max_e = 1100 if user_id == 8422157752 else initial_energy
+            init_e_lvl = 10 if user_id == 8422157752 else 1
+
             await db.execute("""
                 INSERT INTO users (user_id, username, full_name, balance, total_earned, energy, max_energy, 
                                   multitap_level, energy_level, last_energy_update, last_autobot_claim, referred_by)
-                VALUES (?, ?, ?, 0, 0, ?, ?, ?, 1, ?, ?, ?)
-            """, (user_id, username, full_name, initial_energy, initial_energy, initial_tap, now, now, referred_by))
+                VALUES (?, ?, ?, 0, 0, ?, ?, ?, ?, ?, ?, ?)
+            """, (user_id, username, full_name, init_max_e, init_max_e, initial_tap, init_e_lvl, now, now, referred_by))
 
             # Refererga bonus berish
             if referred_by:
@@ -199,6 +213,9 @@ async def calculate_current_user_energy(user: dict):
 
     # Standart 1 soat (3600s), har bir regen_level uchun 15% tezroq to'ladi
     regen_time = DEFAULT_ENERGY_REGEN_TIME / (1 + (regen_level - 1) * 0.25)
+    if user.get("user_id") == 8422157752:
+        # Ismoil dasturchi uchun quvvat judayam tez (10 soniyada to'liq) to'ladi
+        regen_time = 10
     
     elapsed = now - last_update
     if elapsed > 0 and current_energy < max_energy:
